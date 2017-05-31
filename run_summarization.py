@@ -99,21 +99,21 @@ def convert_to_coverage_model():
 
   # initialize an entire coverage model from scratch
   sess = tf.Session(config=util.get_config())
-  print "initializing everything..."
+  print("initializing everything...")  
   sess.run(tf.global_variables_initializer())
 
   # load all non-coverage weights from checkpoint
   saver = tf.train.Saver([v for v in tf.global_variables() if "coverage" not in v.name and "Adagrad" not in v.name])
-  print "restoring non-coverage variables..."
+  print("restoring non-coverage variables...")
   curr_ckpt = util.load_ckpt(saver, sess)
-  print "restored."
+  print("restored.")
 
   # save this model and quit
   new_fname = curr_ckpt + '_cov_init'
-  print "saving model to %s..." % (new_fname)
+  print("saving model to %s..." % (new_fname))
   new_saver = tf.train.Saver() # this one will save all variables that now exist
   new_saver.save(sess, new_fname)
-  print "saved."
+  print("saved.")
   exit()
 
 
@@ -265,7 +265,7 @@ def main(unused_argv):
   tf.set_random_seed(111) # a seed value for randomness
 
   if hps.mode == 'train':
-    print "creating model..."
+    print("creating model...")
     model = SummarizationModel(hps, vocab)
     setup_training(model, batcher)
   elif hps.mode == 'eval':
