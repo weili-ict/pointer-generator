@@ -51,7 +51,7 @@ class Vocab(object):
             self._word_to_id[w] = self._count
             self._id_to_word[self._count] = w
             self._count += 1
-            
+        
         # Read the vocab file and add words up to max_size
         with open(vocab_file, 'r') as vocab_f:
             for line in vocab_f:
@@ -102,27 +102,27 @@ class Vocab(object):
         with open(fpath, "w") as f:
             fieldnames = ['word']
             writer = csv.DictWriter(f, delimiter="\t", fieldnames=fieldnames)
-            for i in range(self.size()):
+            for i in xrange(self.size()):
                 writer.writerow({"word": self._id_to_word[i]})
 
 
 def example_generator(data_path, single_pass):
     """Generates tf.Examples from data files.
-    Binary data format: <length><blob>. <length> represents the byte size of <blob>. 
-    <blob> is serialized tf.Example proto. The tf.Example contains the tokenized 
-    article text and summary.
+    Binary data format: <length><blob>. 
+    <length> represents the byte size of <blob>. 
+    <blob> is serialized tf.Example proto. The tf.Example contains the tokenized article text and summary.
     
     Args:
-    data_path:
-        Path to tf.Example data files. Can include wildcards, e.g. if you have several 
-        training data chunk files train_001.bin, train_002.bin, etc, then pass data_path=train_* 
-        to access them all.
-    single_pass:
-        Boolean. If True, go through the dataset exactly once, generating examples in the order 
-        they appear, then return. Otherwise, generate random examples indefinitely.
-        
-    Yields:
-        Deserialized tf.Example.
+        data_path:
+            Path to tf.Example data files. Can include wildcards, e.g. if you have several 
+            training data chunk files train_001.bin, train_002.bin, etc, then pass data_path=train_* 
+            to access them all.
+        single_pass:
+            Boolean. If True, go through the dataset exactly once, generating examples in the order 
+            they appear, then return. Otherwise, generate random examples indefinitely.
+            
+        Yields:
+            Deserialized tf.Example.
     """
     
     while True:
@@ -153,12 +153,12 @@ def article2ids(article_words, vocab):
     
     Returns:
         ids:
-        A list of word ids (integers); OOVs are represented by their temporary 
-        article OOV number. If the vocabulary size is 50k and the article has 3 OOVs, 
-        then these temporary OOV numbers will be 50000, 50001, 50002.
+            A list of word ids (integers); OOVs are represented by their temporary 
+            article OOV number. If the vocabulary size is 50k and the article has 3 OOVs, 
+            then these temporary OOV numbers will be 50000, 50001, 50002.
         oovs:
-        A list of the OOV words in the article (strings), in the order corresponding 
-        to their temporary article OOV numbers."""
+            A list of the OOV words in the article (strings), in the order corresponding 
+            to their temporary article OOV numbers."""
     ids = []
     oovs = []
     unk_id = vocab.word2id(UNKNOWN_TOKEN)

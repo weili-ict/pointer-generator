@@ -69,7 +69,8 @@ class Example(object):
             # Get a verison of the reference summary where in-article OOVs are represented by their temporary article OOV id
             abs_ids_extend_vocab = data.abstract2ids(abstract_words, vocab, self.article_oovs)
             
-            # Overwrite decoder target sequence so it uses the temp article OOV ids
+            # Overwrite decoder target sequence so it uses the temporary article OOV ids
+            # Notice the decoder input sequence doesn't use the temporary article OOV ids
             _, self.target = self.get_dec_inp_targ_seqs(abs_ids_extend_vocab, hps.max_dec_steps, start_decoding, stop_decoding)
         
         # Store the original strings
@@ -98,7 +99,7 @@ class Example(object):
             target = target[:max_len] # no end_token
         else: # no truncation
             target.append(stop_id) # end token
-            
+
         assert len(inp) == len(target)
         return inp, target
     
@@ -192,7 +193,6 @@ class Batch(object):
         # Pad the inputs and targets
         for ex in example_list:
             ex.pad_decoder_inp_targ(hps.max_dec_steps, self.pad_id)
-            
         
         # Initialize the numpy arrays.
         # Note: our decoder inputs and targets must be the same length for each batch (second dimension = max_dec_steps) because we do not use a dynamic_rnn for decoding. However I believe this is possible, or will soon be possible, with Tensorflow 1.0, in which case it may be best to upgrade to that.
@@ -206,7 +206,7 @@ class Batch(object):
             self.target_batch[i, :] = ex.target[:]
             for j in xrange(ex.dec_len):
                 self.padding_mask[i][j] = 1
-                
+    
     def store_orig_strings(self, example_list):
         """Store the original article and abstract strings in the Batch object"""
         self.original_articles = [ex.original_article for ex in example_list] # list of lists
@@ -318,7 +318,7 @@ class Batcher(object):
             if self._hps.mode != 'decode':
                 # Get bucketing_cache_size-many batches of Examples into a list, then sort
                 inputs = []
-                for _ in range(self._hps.batch_size * self._bucketing_cache_size):
+                for _ in xrange(self._hps.batch_size * self._bucketing_cache_size):
                     inputs.append(self._example_queue.get())    
                 inputs = sorted(inputs, key=lambda inp: inp.enc_len) # sort by length of encoder sequence
                 
@@ -329,7 +329,7 @@ class Batcher(object):
                     
                 if not self._single_pass:
                     shuffle(batches)
-                    
+                
                 for b in batches:  # each b is a list of Example objects
                     self._batch_queue.put(Batch(b, self._hps, self._vocab))
             else: # beam search decode mode
@@ -372,7 +372,7 @@ class Batcher(object):
                 tf.logging.error('Failed to get article or abstract from example: %s', text_format.MessageToString(e))
                 continue
             
-            if len(article_text)==0: # See https://github.com/abisee/pointer-generator/issues/1
+            if len(article_text) == 0: # See https://github.com/abisee/pointer-generator/issues/1
                 tf.logging.warning('Found an example with empty article text. Skipping it.')
             else:
                 yield (article_text, abstract_text)

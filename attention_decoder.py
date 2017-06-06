@@ -32,7 +32,8 @@ def attention_decoder(decoder_inputs, initial_state, encoder_states, cell, initi
         encoder_states: 3D Tensor [batch_size x attn_length x attn_size].
         cell: rnn_cell.RNNCell defining the cell function and size.
         initial_state_attention:
-          Note that this attention decoder passes each decoder input through a linear layer with the previous step's context vector to get a modified version of the input. 
+          Note that this attention decoder passes each decoder input through a linear layer with the previous step's context vector 
+          to get a modified version of the input.
           If initial_state_attention is False, on the first decoder step the "previous context vector" is just a zero vector. 
           If initial_state_attention is True, we use initial_state to (re)calculate the previous step's context vector. 
           We set this to False for train/eval mode (because we call attention_decoder once for all decoder steps) and 
@@ -119,7 +120,6 @@ def attention_decoder(decoder_inputs, initial_state, encoder_states, cell, initi
                 # Calculate the context vector from attn_dist and encoder_states
                 context_vector = math_ops.reduce_sum(array_ops.reshape(attn_dist, [batch_size, -1, 1, 1]) * encoder_states, [1, 2]) # shape (batch_size, attn_size).
                 context_vector = array_ops.reshape(context_vector, [-1, attn_size])
-
             return context_vector, attn_dist, coverage
 
         outputs = []
@@ -138,7 +138,7 @@ def attention_decoder(decoder_inputs, initial_state, encoder_states, cell, initi
             tf.logging.info("Adding attention_decoder timestep %i of %i", i, len(decoder_inputs))
             if i > 0:
                 variable_scope.get_variable_scope().reuse_variables()
-                
+            
             # Merge input and previous attentions into one vector x of the same size as inp
             input_size = inp.get_shape().with_rank(2)[1]
             if input_size.value is None:

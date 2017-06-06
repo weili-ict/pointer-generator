@@ -43,7 +43,7 @@ class SummarizationModel(object):
         if FLAGS.pointer_gen:
             self._enc_batch_extend_vocab = tf.placeholder(tf.int32, [hps.batch_size, None], name='enc_batch_extend_vocab')
             self._max_art_oovs = tf.placeholder(tf.int32, [], name='max_art_oovs')
-            
+        
         # decoder part
         self._dec_batch = tf.placeholder(tf.int32, [hps.batch_size, hps.max_dec_steps], name='dec_batch')
         self._target_batch = tf.placeholder(tf.int32, [hps.batch_size, hps.max_dec_steps], name='target_batch')
@@ -51,7 +51,7 @@ class SummarizationModel(object):
         
         if hps.mode=="decode" and hps.coverage:
             self.prev_coverage = tf.placeholder(tf.float32, [hps.batch_size, None], name='prev_coverage')
-            
+
     def _make_feed_dict(self, batch, just_enc=False):
         """Make a feed dictionary mapping parts of the batch to the appropriate placeholders.
         Args:
@@ -80,9 +80,9 @@ class SummarizationModel(object):
             seq_len: Lengths of encoder_inputs (before padding). A tensor of shape [batch_size].
         Returns:
             encoder_outputs:
-            A tensor of shape [batch_size, <=max_enc_steps, 2*hidden_dim]. It's 2*hidden_dim because it's the concatenation of the forwards and backwards states.
+                A tensor of shape [batch_size, <=max_enc_steps, 2*hidden_dim]. It's 2*hidden_dim because it's the concatenation of the forwards and backwards states.
             fw_state, bw_state:
-            Each are LSTMStateTuples of shape ([batch_size,hidden_dim],[batch_size,hidden_dim])
+                Each are LSTMStateTuples of shape ([batch_size,hidden_dim],[batch_size,hidden_dim])
         """
         with tf.variable_scope('encoder'):
             cell_fw = tf.contrib.rnn.LSTMCell(self._hps.hidden_dim, initializer=self.rand_unif_init, state_is_tuple=True)
@@ -91,9 +91,9 @@ class SummarizationModel(object):
             encoder_outputs = tf.concat(axis=2, values=encoder_outputs) # concatenate the forwards and backwards states
             return encoder_outputs, fw_st, bw_st
     
-    
     def _reduce_states(self, fw_st, bw_st):
-        """Add to the graph a linear layer to reduce the encoder's final FW and BW state into a single initial state for the decoder. This is needed because the encoder is bidirectional but the decoder is not.
+        """Add to the graph a linear layer to reduce the encoder's final FW and BW state into a single initial state for the decoder. 
+        This is needed because the encoder is bidirectional but the decoder is not.
         Args:
             fw_st: LSTMStateTuple with hidden_dim units.
             bw_st: LSTMStateTuple with hidden_dim units.
@@ -117,7 +117,8 @@ class SummarizationModel(object):
             return tf.contrib.rnn.LSTMStateTuple(new_c, new_h) # Return new cell and state
     
     def _add_decoder(self, inputs):
-        """Add attention decoder to the graph. In train or eval mode, you call this once to get output on ALL steps. In decode (beam search) mode, you call this once for EACH decoder step.
+        """Add attention decoder to the graph. In train or eval mode, you call this once to get output on ALL steps. 
+        In decode (beam search) mode, you call this once for EACH decoder step.
         Args:
             inputs: inputs to the decoder (word embeddings). A list of tensors shape (batch_size, emb_dim)
         Returns:
@@ -129,8 +130,9 @@ class SummarizationModel(object):
         """
         hps = self._hps
         cell = tf.contrib.rnn.LSTMCell(hps.hidden_dim, state_is_tuple=True, initializer=self.rand_unif_init)
-
-        prev_coverage = self.prev_coverage if hps.mode=="decode" and hps.coverage else None # In decode mode, we run attention_decoder one step at a time and so need to pass in the previous step's coverage vector each time
+        
+        # In decode mode, we run attention_decoder one step at a time and so need to pass in the previous step's coverage vector each time
+        prev_coverage = self.prev_coverage if hps.mode=="decode" and hps.coverage else None 
 
         outputs, out_state, attn_dists, p_gens, coverage = attention_decoder(inputs, self._dec_in_state, self._enc_states, cell, initial_state_attention=(hps.mode=="decode"), pointer_gen=hps.pointer_gen, use_coverage=hps.coverage, prev_coverage=prev_coverage)
 
@@ -201,7 +203,8 @@ class SummarizationModel(object):
             # Add embedding matrix (shared by the encoder and decoder inputs)
             with tf.variable_scope('embedding'):
                 embedding = tf.get_variable('embedding', [vsize, hps.emb_dim], dtype=tf.float32, initializer=self.trunc_norm_init)
-                if hps.mode=="train": self._add_emb_vis(embedding) # add to tensorboard
+                if hps.mode=="train": 
+                    self._add_emb_vis(embedding) # add to tensorboard
                 emb_enc_inputs = tf.nn.embedding_lookup(embedding, self._enc_batch) # tensor with shape (batch_size, max_enc_steps, emb_size)
                 emb_dec_inputs = [tf.nn.embedding_lookup(embedding, x) for x in tf.unstack(self._dec_batch, axis=1)] # list length max_dec_steps containing shape (batch_size, emb_size)
 
@@ -215,7 +218,7 @@ class SummarizationModel(object):
             # Add the decoder.
             with tf.variable_scope('decoder'):
                 decoder_outputs, self._dec_out_state, self.attn_dists, self.p_gens, self.coverage = self._add_decoder(emb_dec_inputs)
-                
+            
             # Add the output projection to obtain the vocabulary distribution
             with tf.variable_scope('output_projection'):
                 w = tf.get_variable('w', [hps.hidden_dim, vsize], dtype=tf.float32, initializer=self.trunc_norm_init)
